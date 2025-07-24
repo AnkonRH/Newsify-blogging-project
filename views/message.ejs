@@ -1,0 +1,48 @@
+<!-- views/message.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('./partial/head') %>
+  <title><%= title %></title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f9fc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .message-box {
+      background: white;
+      padding: 2rem 2.5rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      max-width: 500px;
+      text-align: center;
+    }
+
+    .message-box h2 {
+      color: #007bff;
+      margin-bottom: 1rem;
+    }
+
+    .message-box p {
+      color: #333;
+    }
+
+    .message-box a {
+      color: #007bff;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="message-box">
+    <h2><%= title %></h2>
+    <p><%- message %></p>
+  </div>
+</body>
+</html>

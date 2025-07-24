@@ -1,0 +1,58 @@
+<!-- views/email-sent.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('./partial/head') %>
+  <title>Reset Link Sent</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f1f8ff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    .box {
+      background: white;
+      padding: 2rem 2.5rem;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    h2 {
+      color: #007bff;
+      margin-bottom: 1rem;
+    }
+
+    p {
+      color: #333;
+    }
+
+    .btn {
+      display: inline-block;
+      margin-top: 1.5rem;
+      padding: 10px 20px;
+      text-decoration: none;
+      border-radius: 8px;
+      background-color: #007bff;
+      color: white;
+      transition: background-color 0.3s;
+    }
+
+    .btn:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>Reset Link Sent</h2>
+    <p>If the email exists in our system, you will receive a password reset link shortly.Kindly check your email Account.</p>
+
+   
+  </div>
+</body>
+</html>

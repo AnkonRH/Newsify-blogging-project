@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('./partial/head') %>
+  <title>Homepage</title>
+  <style>
+    .bitkit-link {
+      display: block;
+      text-align: center;
+      margin: 40px auto 20px;
+    }
+
+    .bitkit-link a {
+      background: #007bff;
+      color: white;
+      text-decoration: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      box-shadow: 0 4px 10px rgba(0, 123, 255, 0.2);
+      transition: background 0.3s ease;
+    }
+
+    .bitkit-link a:hover {
+      background: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <%- include('./partial/nav') %>
+
+  <% if (user) { %>
+    <div class="blog-container" style="display: flex; flex-wrap: wrap; gap: 20px; padding: 20px;">
+      <% blogs.forEach(function(blog) { %>
+        <div class="blog-card" style="border: 1px solid #ccc; border-radius: 10px; padding: 15px; width: 300px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); background: white;">
+          
+          <% if (blog.coverImageUrl) { %>
+            <img src="<%= blog.coverImageUrl %>" alt="cover image" style="width: 100%; height: auto; border-radius: 8px;">
+          <% } %>
+
+          <h3 style="margin-top: 15px;"><%= blog.title %></h3>
+
+          <% if (blog.createdBy) { %>
+            <p style="margin: 5px 0;"><strong>Author:</strong> <%= blog.createdBy.fullName %></p>
+            <p style="margin: 5px 0;"><strong>Email:</strong> <%= blog.createdBy.email %></p>
+          <% } %>
+
+          <small>Posted on <%= new Date(blog.createdAt).toLocaleString() %></small>
+          <br><br>
+
+          <a href="/view/blog/<%= blog._id %>" class="btn btn-primary btn-sm">View</a>
+
+          <% if (blog.createdBy && blog.createdBy._id.toString() === user._id.toString()) { %>
+            <form action="/delete/blog/<%= blog._id %>" method="POST" style="margin-top: 10px;">
+              <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+            </form>
+          <% } %>
+        </div>
+      <% }) %>
+    </div>
+
+  <% } else { %>
+    <div class="container my-5">
+      <div class="alert alert-warning text-center shadow-sm rounded-4 p-5" style="background: linear-gradient(135deg, #fff4e6, #ffe8cc); border-left: 5px solid #f59f00;">
+        <h4 class="mb-3">🔒 You must sign in to view blog posts</h4>
+        <p class="mb-4 text-muted">Access to articles and news is available only to registered users.</p>
+        <a href="/user/signin" class="btn btn-primary px-4 me-2">Sign In</a>
+        <a href="/user/signup" class="btn btn-outline-secondary px-4">Create Account</a>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- ✅ Link to BiTKiT Official Website -->
+  <div class="bitkit-link">
+    <a href="https://bitkit-green.vercel.app/" target="_blank">Go back to BiTKiT official website</a>
+  </div>
+
+  <%- include('./partial/script') %>
+</body>
+</html>

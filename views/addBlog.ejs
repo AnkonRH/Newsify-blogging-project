@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('./partial/head') %>
+  <title>Add Blog</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #fdfbfb, #ebedee);
+      margin: 0;
+      padding: 0;
+    }
+
+    .blog-form-container {
+      max-width: 600px;
+      margin: 80px auto;
+      background: #fff;
+      padding: 2.5rem;
+      border-radius: 16px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .blog-form-container h2 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: #333;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: #444;
+    }
+
+    input[type="text"],
+    textarea,
+    input[type="file"] {
+      width: 100%;
+      padding: 0.75rem;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      transition: 0.3s ease;
+    }
+
+    input[type="text"]:focus,
+    textarea:focus {
+      outline: none;
+      border-color: #4a90e2;
+      box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 150px;
+    }
+
+    .submit-btn {
+      width: 100%;
+      background-color: #4a90e2;
+      color: white;
+      font-size: 1rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 10px;
+      padding: 0.75rem;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .submit-btn:hover {
+      background-color: #357ab7;
+    }
+
+    @media (max-width: 600px) {
+      .blog-form-container {
+        margin: 60px 20px;
+        padding: 2rem 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <%- include('./partial/nav') %> <!-- ✅ Bootstrap Navbar stays -->
+
+  <div class="blog-form-container">
+    <h2>Add News</h2>
+    <form action="/blog" method="post" enctype="multipart/form-data">
+      <div class="form-group">
+        <label for="title">Title</label>
+        <input type="text" id="title" name="title" placeholder="Enter blog title" required />
+      </div>
+
+      <div class="form-group">
+        <label for="body">Body</label>
+        <textarea id="body" name="body" placeholder="Write your blog content here..." required></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="image">Choose an image</label>
+        <input type="file" id="image" name="image" accept="image/*" />
+      </div>
+
+      <button type="submit" class="submit-btn">Publish Blog</button>
+    </form>
+  </div>
+
+  <%- include('./partial/script') %>
+</body>
+</html>
