@@ -3,19 +3,19 @@ const router = Router();
 const multer = require("multer");
 const Blog = require("../models/blog");
 const cloudinary = require("../utils/cloudinary");
-const streamifier = require("streamifier"); // ✅ important
+const streamifier = require("streamifier");
 
-// Use memory storage for multer
-const upload = multer({ storage: multer.memoryStorage() });
+// ✅ Use memory storage and limit file size to 4MB
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 4 * 1024 * 1024 }, // 4MB
+});
 
 /**
  * GET /blog/addBlog
- * Show blog creation page
  */
 router.get("/addBlog", (req, res) => {
-  if (!req.user) {
-    return res.redirect("/user/signin");
-  }
+  if (!req.user) return res.redirect("/user/signin");
 
   res.render("addBlog", {
     user: req.user,
@@ -24,12 +24,9 @@ router.get("/addBlog", (req, res) => {
 
 /**
  * POST /blog
- * Upload blog with image
  */
 router.post("/", upload.single("image"), async (req, res) => {
-  if (!req.user) {
-    return res.status(401).send("Unauthorized: Please log in first");
-  }
+  if (!req.user) return res.status(401).send("Unauthorized: Please log in");
 
   const { title, body } = req.body;
 
@@ -37,7 +34,7 @@ router.post("/", upload.single("image"), async (req, res) => {
     let coverImageUrl = null;
 
     if (req.file) {
-      // ✅ Upload to Cloudinary using streamifier
+      // ✅ Upload image to Cloudinary
       const streamUpload = () => {
         return new Promise((resolve, reject) => {
           const stream = cloudinary.uploader.upload_stream(
@@ -47,7 +44,7 @@ router.post("/", upload.single("image"), async (req, res) => {
               else reject(error);
             }
           );
-          streamifier.createReadStream(req.file.buffer).pipe(stream); // ✅ fixed
+          streamifier.createReadStream(req.file.buffer).pipe(stream);
         });
       };
 
@@ -55,7 +52,6 @@ router.post("/", upload.single("image"), async (req, res) => {
       coverImageUrl = result.secure_url;
     }
 
-    // ✅ Create blog entry in DB
     await Blog.create({
       title,
       body,
@@ -65,10 +61,16 @@ router.post("/", upload.single("image"), async (req, res) => {
 
     res.redirect("/");
   } catch (error) {
-    console.error("❌ Error creating blog:", error);
+    console.error("❌ Blog upload error:", error);
+
+    let message = "Something went wrong while posting the blog.";
+    if (error.message?.includes("File too large")) {
+      message = "Image too large. Please upload an image under 4MB.";
+    }
+
     res.status(500).render("message", {
-      title: "Blog Upload Failed",
-      message: "Something went wrong while posting the blog. Please try again.",
+      title: "Upload Failed",
+      message,
     });
   }
 });
