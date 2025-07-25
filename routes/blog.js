@@ -3,13 +3,14 @@ const router = Router();
 const multer = require("multer");
 const Blog = require("../models/blog");
 const cloudinary = require("../utils/cloudinary");
+const streamifier = require("streamifier"); // ✅ important
 
-// Use memory storage for multer (uploads handled in memory)
+// Use memory storage for multer
 const upload = multer({ storage: multer.memoryStorage() });
 
 /**
  * GET /blog/addBlog
- * Show the blog creation page
+ * Show blog creation page
  */
 router.get("/addBlog", (req, res) => {
   if (!req.user) {
@@ -22,8 +23,8 @@ router.get("/addBlog", (req, res) => {
 });
 
 /**
- * POST /blog/
- * Handle blog creation and upload image to Cloudinary
+ * POST /blog
+ * Upload blog with image
  */
 router.post("/", upload.single("image"), async (req, res) => {
   if (!req.user) {
@@ -36,9 +37,9 @@ router.post("/", upload.single("image"), async (req, res) => {
     let coverImageUrl = null;
 
     if (req.file) {
-      // Cloudinary upload using a stream
-      const streamUpload = () =>
-        new Promise((resolve, reject) => {
+      // ✅ Upload to Cloudinary using streamifier
+      const streamUpload = () => {
+        return new Promise((resolve, reject) => {
           const stream = cloudinary.uploader.upload_stream(
             { folder: "blogs" },
             (error, result) => {
@@ -46,13 +47,15 @@ router.post("/", upload.single("image"), async (req, res) => {
               else reject(error);
             }
           );
-          stream.end(req.file.buffer);
+          streamifier.createReadStream(req.file.buffer).pipe(stream); // ✅ fixed
         });
+      };
 
       const result = await streamUpload();
       coverImageUrl = result.secure_url;
     }
 
+    // ✅ Create blog entry in DB
     await Blog.create({
       title,
       body,
@@ -62,8 +65,11 @@ router.post("/", upload.single("image"), async (req, res) => {
 
     res.redirect("/");
   } catch (error) {
-    console.error("Error creating blog:", error);
-    res.status(500).send("Internal Server Error");
+    console.error("❌ Error creating blog:", error);
+    res.status(500).render("message", {
+      title: "Blog Upload Failed",
+      message: "Something went wrong while posting the blog. Please try again.",
+    });
   }
 });
 
