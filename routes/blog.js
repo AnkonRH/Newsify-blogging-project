@@ -1,26 +1,11 @@
 const { Router } = require("express");
 const router = Router();
 const multer = require("multer");
-const path = require("path");
 const Blog = require("../models/blog");
-const fs = require("fs");
+const cloudinary = require("../utils/cloudinary");
 
-// Multer storage config
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const uploadPath = path.resolve("./public/uploads");
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-    cb(null, uploadPath);
-  },
-  filename: function (req, file, cb) {
-    const filename = `${Date.now()}-${file.originalname}`;
-    cb(null, filename);
-  },
-});
-
-const upload = multer({ storage: storage });
+// Use memory storage for multer (uploads handled in memory)
+const upload = multer({ storage: multer.memoryStorage() });
 
 /**
  * GET /blog/addBlog
@@ -38,7 +23,7 @@ router.get("/addBlog", (req, res) => {
 
 /**
  * POST /blog/
- * Handle blog creation and redirect to homepage
+ * Handle blog creation and upload image to Cloudinary
  */
 router.post("/", upload.single("image"), async (req, res) => {
   if (!req.user) {
@@ -48,25 +33,38 @@ router.post("/", upload.single("image"), async (req, res) => {
   const { title, body } = req.body;
 
   try {
+    let coverImageUrl = null;
+
+    if (req.file) {
+      // Cloudinary upload using a stream
+      const streamUpload = () =>
+        new Promise((resolve, reject) => {
+          const stream = cloudinary.uploader.upload_stream(
+            { folder: "blogs" },
+            (error, result) => {
+              if (result) resolve(result);
+              else reject(error);
+            }
+          );
+          stream.end(req.file.buffer);
+        });
+
+      const result = await streamUpload();
+      coverImageUrl = result.secure_url;
+    }
+
     await Blog.create({
       title,
       body,
-      coverImageUrl: req.file ? `/uploads/${req.file.filename}` : null,
+      coverImageUrl,
       createdBy: req.user._id,
     });
 
-    // ✅ Redirect to homepage to avoid form resubmission
     res.redirect("/");
   } catch (error) {
     console.error("Error creating blog:", error);
     res.status(500).send("Internal Server Error");
   }
 });
-
-
-
-
-
-
 
 module.exports = router;
