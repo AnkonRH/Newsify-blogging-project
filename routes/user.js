@@ -9,11 +9,13 @@ const router = Router();
 const getEmailProviderUrl = (email) => {
   if (!email) return null;
   const domain = email.split('@')[1].toLowerCase();
+
   if (domain.includes('gmail.com')) return 'https://mail.google.com/';
   if (domain.includes('yahoo.com')) return 'https://mail.yahoo.com/';
   if (domain.includes('outlook.com') || domain.includes('hotmail.com') || domain.includes('live.com'))
     return 'https://outlook.live.com/';
   if (domain.includes('icloud.com')) return 'https://www.icloud.com/mail';
+  if (domain.includes('bitmesra.ac.in')) return 'https://outlook.office.com/';
   return null;
 };
 
@@ -49,9 +51,10 @@ router.post('/signup', async (req, res) => {
     const link = `${process.env.BASE_URL}/user/verify-email?token=${verifyToken}`;
     await sendEmail(email, 'Verify your email', `<p>Click <a href="${link}">here</a> to verify your email.</p>`);
 
-    res.render('message', {
-      title: 'Check Your Email',
-      message: 'Check your email to verify your account.'
+    const emailProviderUrl = getEmailProviderUrl(email);
+
+    res.render('email-sent', {
+      emailProviderUrl,
     });
   } catch (err) {
     console.error('Signup error:', err.message);
@@ -65,13 +68,27 @@ router.get('/verify-email', async (req, res) => {
 
   const user = await User.findOne({
     verifyToken: token,
-    verifyTokenExpiry: { $gt: Date.now() }
   });
 
-  if (!user) {
+  if (!user || user.verifyTokenExpiry < Date.now()) {
+    // If token is invalid or expired —> generate new one and resend
+    if (user) {
+      user.verifyToken = crypto.randomBytes(32).toString('hex');
+      user.verifyTokenExpiry = Date.now() + 3600000;
+      await user.save();
+
+      const link = `${process.env.BASE_URL}/user/verify-email?token=${user.verifyToken}`;
+      await sendEmail(user.email, 'New verification link', `<p>Click <a href="${link}">here</a> to verify your email.</p>`);
+
+      return res.render('message', {
+        title: 'Verification Expired',
+        message: `Your link expired. A new verification link has been sent to your email.`,
+      });
+    }
+
     return res.render('message', {
       title: 'Verification Failed',
-      message: 'Invalid or expired verification link.'
+      message: 'Invalid or expired verification link.',
     });
   }
 
@@ -82,7 +99,7 @@ router.get('/verify-email', async (req, res) => {
 
   res.render('message', {
     title: 'Email Verified',
-    message: 'Email verified! You can now <a href="/user/signin">sign in</a>.'
+    message: 'Email verified! You can now <a href="/user/signin">sign in</a>.',
   });
 });
 
@@ -115,7 +132,6 @@ router.post('/forgot-password', async (req, res) => {
   const emailProviderUrl = getEmailProviderUrl(email);
 
   if (!user) {
-    // Still show message even if user not found (for security)
     return res.render('email-sent', { emailProviderUrl });
   }
 
