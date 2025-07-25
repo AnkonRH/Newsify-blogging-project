@@ -5,19 +5,19 @@ const streamifier = require("streamifier");
 const Blog = require("../models/blog");
 const cloudinary = require("../utils/cloudinary");
 
-// ✅ Use memory storage and limit file size
+// ✅ Use memory storage and limit file size to 4MB
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 4 * 1024 * 1024 }, // 4MB
+  limits: { fileSize: 4 * 1024 * 1024 },
 });
 
-// ✅ GET /blog/addBlog
+// ✅ GET /blog/addBlog — Show form to create blog
 router.get("/addBlog", (req, res) => {
   if (!req.user) return res.redirect("/user/signin");
   res.render("addBlog", { user: req.user });
 });
 
-// ✅ POST /blog
+// ✅ POST /blog — Create a new blog with optional image upload
 router.post("/", upload.single("image"), async (req, res) => {
   if (!req.user) return res.status(401).send("Unauthorized: Please log in");
 
@@ -27,6 +27,7 @@ router.post("/", upload.single("image"), async (req, res) => {
     let coverImageUrl = null;
     let imagePublicId = null;
 
+    // ✅ If image exists, upload to Cloudinary
     if (req.file) {
       const streamUpload = () => {
         return new Promise((resolve, reject) => {
@@ -46,6 +47,7 @@ router.post("/", upload.single("image"), async (req, res) => {
       imagePublicId = result.public_id;
     }
 
+    // ✅ Save blog with image info if exists
     await Blog.create({
       title,
       body,
@@ -57,9 +59,11 @@ router.post("/", upload.single("image"), async (req, res) => {
     res.redirect("/");
   } catch (error) {
     console.error("❌ Blog upload error:", error);
+
     const message = error.message?.includes("File too large")
       ? "Image too large. Please upload an image under 4MB."
       : "Something went wrong while posting the blog.";
+
     res.status(500).render("message", {
       title: "Upload Failed",
       message,
@@ -67,7 +71,7 @@ router.post("/", upload.single("image"), async (req, res) => {
   }
 });
 
-// ✅ DELETE /blog/delete/:id
+// ✅ POST /blog/delete/:id — Delete blog and image
 router.post("/delete/:id", async (req, res) => {
   try {
     const blog = await Blog.findById(req.params.id);
@@ -78,9 +82,14 @@ router.post("/delete/:id", async (req, res) => {
       });
     }
 
-    // ✅ Delete from Cloudinary if uploaded
+    // ✅ Delete Cloudinary image if exists
     if (blog.imagePublicId) {
-      await cloudinary.uploader.destroy(blog.imagePublicId);
+      try {
+        await cloudinary.uploader.destroy(blog.imagePublicId);
+        console.log("✅ Cloudinary image deleted:", blog.imagePublicId);
+      } catch (cloudErr) {
+        console.error("⚠️ Cloudinary deletion failed:", cloudErr);
+      }
     }
 
     await blog.deleteOne();
